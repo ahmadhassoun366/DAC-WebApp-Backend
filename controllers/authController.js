@@ -34,7 +34,7 @@ export const signup = asyncHandler(async (req, res, next) => {
 
   const token = createToken(user._id);
 
-  res.status(201).json({ data: user, token });
+  res.status(201).json({ data: user });
 });
 
 
