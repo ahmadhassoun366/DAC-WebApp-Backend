@@ -3,12 +3,19 @@ import validatorMiddleware from "../../middleWare/validatorMiddleWare.js";
 import slugify from "slugify";
 import User from "../../models/userModels.js";
 
-
 export const signupValidator = [
-  check("name").custom((val, { req }) => {
+  check("firstName").custom((val, { req }) => {
     req.body.slug = slugify(val);
     return true;
   }),
+  check("lastName").custom((val, { req }) => {
+    req.body.slug = slugify(val);
+    return true;
+  }),
+  check("phone")
+    .optional()
+    .isMobilePhone("ar-LB")
+    .withMessage("Invalid phone number"),
   check("email")
     .notEmpty()
     .withMessage("Email is required")

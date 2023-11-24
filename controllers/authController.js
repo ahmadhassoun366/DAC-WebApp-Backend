@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import asyncHandler from "express-async-handler";
 import User from "../models/userModels.js";
 import ApiError from "../error/apiError.js";
- 
+
 const createToken = (payload) => {
   return jwt.sign({ userId: payload }, process.env.JWT_SECRET_KEY, {
     expiresIn: process.env.JWT_EXPIRES_IN,
@@ -13,33 +13,33 @@ const createToken = (payload) => {
 const sanitizeUser = (user) => {
   return {
     _id: user._id,
-    name: user.name,
+    name: user.firstName + " " + user.lastName,
     email: user.email,
   };
 };
 
-
 // @desc Signup
-// @route GET 
+// @route GET
 // @access PUBLIC
 export const signup = asyncHandler(async (req, res, next) => {
   console.log(req.body);
   // Create user
-  const { name, email, password } = req.body;
+  const { firstName, lastName, phone, email, password } = req.body;
   const user = await User.create({
-    name,
+    firstName,
+    lastName,
+    phone,
     email,
     password,
   });
 
-  const token = createToken(user._id);
+  // const token = createToken(user._id);
 
   res.status(201).json({ data: user });
 });
 
-
-// @desc Signup
-// @route GET 
+// @desc SignIn
+// @route GET
 // @access PUBLIC
 export const login = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
@@ -50,7 +50,6 @@ export const login = asyncHandler(async (req, res, next) => {
   const token = createToken(user._id);
   res.status(200).json({ data: sanitizeUser(user), token });
 });
-
 
 export const protect = asyncHandler(async (req, res, next) => {
   let token;
@@ -75,16 +74,20 @@ export const protect = asyncHandler(async (req, res, next) => {
     return next(new ApiError("user not found", 401));
   }
   if (user.passwordChangedAt) {
-    const passChangedTimestamp = parseInt(user.passwordChangedAt.getTime()/1000,10);
+    const passChangedTimestamp = parseInt(
+      user.passwordChangedAt.getTime() / 1000,
+      10
+    );
     console.log(passChangedTimestamp, decoded.iat);
-    if(passChangedTimestamp>decoded.iat){
-      return next(new ApiError("user recently changed password, please login again", 401));
+    if (passChangedTimestamp > decoded.iat) {
+      return next(
+        new ApiError("user recently changed password, please login again", 401)
+      );
     }
   }
-  req.user = user
-  next()
+  req.user = user;
+  next();
 });
-
 
 // @desc    Authorization (User Permissions)
 // ["admin", "manager"]
@@ -94,7 +97,7 @@ export const allowedTo = (...roles) =>
     // 2) access registered user (req.user.role)
     if (!roles.includes(req.user.role)) {
       return next(
-        new ApiError('You are not allowed to access this route', 403)
+        new ApiError("You are not allowed to access this route", 403)
       );
     }
     next();
@@ -114,9 +117,9 @@ export const forgotPassword = asyncHandler(async (req, res, next) => {
   // 2) If user exist, Generate hash reset random 6 digits and save it in db
   const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
   const hashedResetCode = crypto
-    .createHash('sha256')
+    .createHash("sha256")
     .update(resetCode)
-    .digest('hex');
+    .digest("hex");
 
   // Save hashed password reset code into db
   user.passwordResetCode = hashedResetCode;
@@ -131,7 +134,7 @@ export const forgotPassword = asyncHandler(async (req, res, next) => {
   try {
     await sendEmail({
       email: user.email,
-      subject: 'Your password reset code (valid for 10 min)',
+      subject: "Your password reset code (valid for 10 min)",
       message,
     });
   } catch (err) {
@@ -140,30 +143,30 @@ export const forgotPassword = asyncHandler(async (req, res, next) => {
     user.passwordResetVerified = undefined;
 
     await user.save();
-    return next(new ApiError('There is an error in sending email', 500));
+    return next(new ApiError("There is an error in sending email", 500));
   }
 
   res
     .status(200)
-    .json({ status: 'Success', message: 'Reset code sent to email' });
+    .json({ status: "Success", message: "Reset code sent to email" });
 });
 
 // @desc    Verify password reset code
-// @route   POST 
+// @route   POST
 // @access  Public
 export const verifyPassResetCode = asyncHandler(async (req, res, next) => {
   // 1) Get user based on reset code
   const hashedResetCode = crypto
-    .createHash('sha256')
+    .createHash("sha256")
     .update(req.body.resetCode)
-    .digest('hex');
+    .digest("hex");
 
   const user = await User.findOne({
     passwordResetCode: hashedResetCode,
     passwordResetExpires: { $gt: Date.now() },
   });
   if (!user) {
-    return next(new ApiError('Reset code invalid or expired'));
+    return next(new ApiError("Reset code invalid or expired"));
   }
 
   // 2) Reset code valid
@@ -171,12 +174,12 @@ export const verifyPassResetCode = asyncHandler(async (req, res, next) => {
   await user.save();
 
   res.status(200).json({
-    status: 'Success',
+    status: "Success",
   });
 });
 
 // @desc    Reset password
-// @route   POST 
+// @route   POST
 // @access  Public
 export const resetPassword = asyncHandler(async (req, res, next) => {
   // 1) Get user based on email
@@ -189,7 +192,7 @@ export const resetPassword = asyncHandler(async (req, res, next) => {
 
   // 2) Check if reset code verified
   if (!user.passwordResetVerified) {
-    return next(new ApiError('Reset code not verified', 400));
+    return next(new ApiError("Reset code not verified", 400));
   }
 
   user.password = req.body.newPassword;
