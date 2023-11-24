@@ -1,14 +1,14 @@
 import express from "express";
-import { signup, login } from "../controllers/authController.js";
-
-// Create a router
+import {
+    login,
+    signup
+} from "../controllers/authController.js";
+ import {loginValidator, signupValidator } from "../utils/validator/authValidator.js";
+//nested route
 const router = express.Router();
 
-// Signup route
-router.post("/signup", signup);
+//get and post on same path
+router.route("/signup").post(signupValidator,signup);
+router.route("/login").post(loginValidator,login);
 
-// Login route
-router.post("/login", login);
-
-// Export the router
 export default router;
