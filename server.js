@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import dbConnection from "./config/database.js";
 import postRoutes from "./routes/postRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import cors from 'cors'
 // import authRoutes from "./routes/authRoutes.js";
 
 // Load environment variables
@@ -10,6 +11,7 @@ dotenv.config({ path: ".env" });
 const port = process.env.PORT || 3000;
 
 const app = express();
+app.use(cors())
 
 // Connect to Database
 dbConnection();
