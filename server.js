@@ -1,10 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import dbConnection from "./config/database.js";
-import postRoutes from "./routes/postRoutes.js";
-import authRoutes from "./routes/authRoutes.js";
 import cors from 'cors'
-// import authRoutes from "./routes/authRoutes.js";
+import { mountRoutes } from "./routes/index.js";
 
 // Load environment variables
 dotenv.config({ path: ".env" });
@@ -18,12 +16,8 @@ dbConnection();
 
 app.use(express.json()); // Body parser middleware
 
-app.use("/auth", authRoutes);
 
-// app.use("/api", authRoutes);
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-});
+mountRoutes(app);
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
